@@ -126,15 +126,16 @@ function createClient(apiKey?: string): FirecrawlApp {
     }),
   };
 
-  // Only add apiKey if it's provided (required for cloud, optional for self-hosted)
   if (apiKey) {
     config.apiKey = apiKey;
   }
 
+  CLIENT_CONFIG = config;
   return new FirecrawlApp(config);
 }
 
 const ORIGIN = 'mcp-fastmcp';
+let CLIENT_CONFIG: any;
 
 // Safe mode is enabled by default for cloud service to comply with ChatGPT safety requirements
 const SAFE_MODE = process.env.CLOUD_SERVICE === 'true';
@@ -301,6 +302,8 @@ ${
     const client = getClient(session);
     const cleaned = removeEmptyTopLevel(options as Record<string, unknown>);
     log.info('Scraping URL', { url: String(url) });
+    log.debug('Args', args as any);
+    log.debug('ClientConfig', CLIENT_CONFIG);
     const res = await client.scrape(String(url), {
       ...cleaned,
       origin: ORIGIN,
@@ -348,6 +351,8 @@ Map a website to discover all indexed URLs on the site.
     const client = getClient(session);
     const cleaned = removeEmptyTopLevel(options as Record<string, unknown>);
     log.info('Mapping URL', { url: String(url) });
+    log.debug('Args', args as any);
+    log.debug('ClientConfig', CLIENT_CONFIG);
     const res = await client.map(String(url), {
       ...cleaned,
       origin: ORIGIN,
@@ -438,6 +443,8 @@ The query also supports search operators, that you can use if needed to refine t
     const { query, ...opts } = args as Record<string, unknown>;
     const cleaned = removeEmptyTopLevel(opts as Record<string, unknown>);
     log.info('Searching', { query: String(query) });
+    log.debug('Args', args as any);
+    log.debug('ClientConfig', CLIENT_CONFIG);
     const res = await client.search(query as string, {
       ...(cleaned as any),
       origin: ORIGIN,
@@ -512,6 +519,8 @@ server.addTool({
     const client = getClient(session);
     const cleaned = removeEmptyTopLevel(options as Record<string, unknown>);
     log.info('Starting crawl', { url: String(url) });
+    log.debug('Args', args as any);
+    log.debug('ClientConfig', CLIENT_CONFIG);
     const res = await client.crawl(String(url), {
       ...(cleaned as any),
       origin: ORIGIN,
@@ -539,9 +548,11 @@ Check the status of a crawl job.
   parameters: z.object({ id: z.string() }),
   execute: async (
     args: unknown,
-    { session }: { session?: SessionData }
+    { session, log }: { session?: SessionData; log: Logger }
   ): Promise<string> => {
     const client = getClient(session);
+    log.debug('Args', args as any);
+    log.debug('ClientConfig', CLIENT_CONFIG);
     const res = await client.getCrawlStatus((args as any).id as string);
     return asText(res);
   },
@@ -603,6 +614,8 @@ Extract structured information from web pages using LLM capabilities. Supports b
     log.info('Extracting from URLs', {
       count: Array.isArray(a.urls) ? a.urls.length : 0,
     });
+    log.debug('Args', args as any);
+    log.debug('ClientConfig', CLIENT_CONFIG);
     const extractBody = removeEmptyTopLevel({
       urls: a.urls as string[],
       prompt: a.prompt as string | undefined,
